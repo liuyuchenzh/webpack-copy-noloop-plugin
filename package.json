@@ -1,0 +1,20 @@
+{
+  "name": "webpack-copy-noloop-plugin",
+  "version": "0.1.0",
+  "main": "index.js",
+  "author": "Yuchen Liu",
+  "license": "MIT",
+  "dependencies": {
+    "fs-extra": "^7.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/liuyuchenzh/webpack-copy-noloop-plugin.git"
+  },
+  "bugs": {
+    "url": "https://github.com/liuyuchenzh/webpack-copy-noloop-plugin/issues"
+  },
+  "engines": {
+    "node": ">=8.11.0"
+  }
+}
