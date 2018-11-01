@@ -1,6 +1,7 @@
 const fse = require("fs-extra");
 const fs = require("fs");
 const path = require("path");
+const name = require("./package.json").name;
 
 const isDir = location => fs.statSync(location).isDirectory();
 const gatherFiles = location => pattern => {
@@ -47,6 +48,7 @@ class CopyNoLoopPlugin {
   /**
    * @param {object} options
    * @param {CopyItem[]} options.list
+   * @param {string=} options.root root directory
    */
   constructor(options) {
     this.options = options;
@@ -54,9 +56,23 @@ class CopyNoLoopPlugin {
 
   apply(compiler) {
     compiler.hooks.done.tap("CopyNoLoopPlugin", () => {
-      const { list } = this.options;
+      const { list, root } = this.options;
       if (!Array.isArray(list)) return;
-      list.forEach(item => {
+      let listMut = list.slice();
+      if (root) {
+        // check for absolute
+        if (!path.isAbsolute(root)) {
+          throw new Error(`[${name}]: root needs to be an absolute path!`);
+        }
+        listMut = listMut.map(item => {
+          return {
+            ...item,
+            from: path.resolve(root, item.from),
+            to: path.resolve(root, item.to)
+          };
+        });
+      }
+      listMut.forEach(item => {
         const {
           from,
           to,

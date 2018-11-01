@@ -37,7 +37,21 @@ module.exports = {
 
 ## Config
 
-### from
+### [root]
+
+```js
+new CopyPlugin({
+  root: __dirname
+});
+```
+
+Set the root for the `list` config.
+
+If set, then all `from` and `to` in the `list` field will be resolved from `root` value.
+
+### list
+
+#### from
 
 ```ts
 type from = string;
@@ -45,7 +59,7 @@ type from = string;
 
 Source. Could be file or directory.
 
-### to
+#### to
 
 ```ts
 type to = string;
@@ -55,7 +69,7 @@ Destination. Could be file or directory.
 
 > Type must match the corresponding `from`. If `from` is file, then `to` needs to be file. Same applies for directory.
 
-### [pattern]
+#### [pattern]
 
 ```ts
 type pattern = RegExp;
@@ -63,7 +77,7 @@ type pattern = RegExp;
 
 If `from` is directory then you can use `pattern` to match desire files.
 
-### [filter]
+#### [filter]
 
 ```ts
 type filter = (from: string, to: string) => boolean;
@@ -71,7 +85,7 @@ type filter = (from: string, to: string) => boolean;
 
 Similar to `pattern`, but apply for both directory and file.
 
-### [flatten = false]
+#### [flatten = false]
 
 ```ts
 type flatten = boolean;
