@@ -1,7 +1,7 @@
 const fse = require("fs-extra");
 const fs = require("fs");
 const path = require("path");
-const name = require("./package.json").name;
+const name = 'webpack-copy-noloop-plugin';
 
 const isDir = location => fs.statSync(location).isDirectory();
 const gatherFiles = location => pattern => {

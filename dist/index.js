@@ -1,2 +1,67 @@
-var r=require("fs-extra"),o=require("fs"),t=require("path"),n=require("./package.json").name,e=function(r){return o.statSync(r).isDirectory()},i=function(r){return function(n){return o.readdirSync(r).reduce(function(o,a){var u=t.join(r,"/",a);return e(u)?o.concat(i(t.join(r,"/",a))(n)):n.test(u)&&o.push(u),o},[])}},a=function(r){this.options=r};a.prototype.apply=function(o){var a=this;o.hooks.done.tap("CopyNoLoopPlugin",function(){var o=a.options,u=o.list,c=o.root;if(Array.isArray(u)){var f=u.slice();if(c){if(!t.isAbsolute(c))throw new Error("["+n+"]: root needs to be an absolute path!");f=f.map(function(r){return Object.assign({},r,{from:t.resolve(c,r.from),to:t.resolve(c,r.to)})})}f.forEach(function(o){var n=o.from,a=o.to,u=o.filter;void 0===u&&(u=function(){return!0});var c=o.pattern,f=o.flatten;(void 0===f&&(f=!1),e(n)&&c)?i(n)(c).forEach(function(o){var e,i,c=(e=n,i=a,function(r,o){void 0===o&&(o=!1);var n=o?t.basename(r):t.relative(e,r);return t.join(i,"/",n)})(o,f);r.copySync(o,c,{filter:u})}):r.copySync(n,a,{filter:u})})}})},module.exports=a;
+var fse = require("fs-extra");
+var fs = require("fs");
+var path = require("path");
+var name = 'webpack-copy-noloop-plugin';
+var isDir = function (location) { return fs.statSync(location).isDirectory(); };
+var gatherFiles = function (location) { return function (pattern) { return fs.readdirSync(location).reduce(function (last, file) {
+    var fileInAbs = path.join(location, "/", file);
+    if (isDir(fileInAbs)) {
+        last.concat(gatherFiles(path.join(location, "/", file))(pattern));
+    } else {
+        if (pattern.test(fileInAbs)) {
+            last.push(fileInAbs);
+        }
+    }
+    return last;
+}, []); }; };
+var getDestPath = function (dirFromPath, dirToPath) { return function (fileFromPath, flatten) {
+    if ( flatten === void 0 ) flatten = false;
+
+    var relativePath = flatten ? path.basename(fileFromPath) : path.relative(dirFromPath, fileFromPath);
+    return path.join(dirToPath, "/", relativePath);
+}; };
+var CopyNoLoopPlugin = function CopyNoLoopPlugin(options) {
+    this.options = options;
+};
+CopyNoLoopPlugin.prototype.apply = function apply (compiler) {
+        var this$1 = this;
+
+    compiler.hooks.done.tap("CopyNoLoopPlugin", function () {
+        var ref = this$1.options;
+            var list = ref.list;
+            var root = ref.root;
+        if (!Array.isArray(list)) 
+            { return; }
+        var listMut = list.slice();
+        if (root) {
+            if (!path.isAbsolute(root)) {
+                throw new Error(("[" + name + "]: root needs to be an absolute path!"));
+            }
+            listMut = listMut.map(function (item) { return (Object.assign({}, item,
+                {from: path.resolve(root, item.from),
+                to: path.resolve(root, item.to)})); });
+        }
+        listMut.forEach(function (item) {
+            var from = item.from;
+                var to = item.to;
+                var filter = item.filter; if ( filter === void 0 ) filter = function () { return true; };
+                var pattern = item.pattern;
+                var flatten = item.flatten; if ( flatten === void 0 ) flatten = false;
+            if (isDir(from) && pattern) {
+                var files = gatherFiles(from)(pattern);
+                files.forEach(function (file) {
+                    var dest = getDestPath(from, to)(file, flatten);
+                    fse.copySync(file, dest, {
+                        filter: filter
+                    });
+                });
+            } else {
+                fse.copySync(from, to, {
+                    filter: filter
+                });
+            }
+        });
+    });
+};
+module.exports = CopyNoLoopPlugin;
 //# sourceMappingURL=index.js.map
