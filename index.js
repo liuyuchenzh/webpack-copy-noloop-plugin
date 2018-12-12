@@ -50,14 +50,20 @@ class CopyNoLoopPlugin {
    * @param {CopyItem[]} options.list
    * @param {string=} options.root root directory
    * @param {boolean=} [options.move=false] whether to move or not
+   * @param {function|number=} [options.waitFor=() => Promise.resolve()]
    */
   constructor(options) {
     this.options = options;
   }
 
   apply(compiler) {
-    compiler.hooks.done.tap("CopyNoLoopPlugin", () => {
-      const { list, root, move = false } = this.options;
+    compiler.hooks.done.tap("CopyNoLoopPlugin", async () => {
+      const {
+        list,
+        root,
+        move = false,
+        waitFor = () => Promise.resolve()
+      } = this.options;
       const action = move ? "moveSync" : "copySync";
       if (!Array.isArray(list)) return;
       let listMut = list.slice();
@@ -74,6 +80,18 @@ class CopyNoLoopPlugin {
           };
         });
       }
+      try {
+        if (typeof waitFor === "function") {
+          await waitFor();
+        } else {
+          await new Promise(resolve => setTimeout(resolve, waitFor));
+        }
+      } catch (e) {
+        console.log(`[${name}]: Err occurred when trying to execute waitFor`);
+        console.log(e);
+        process.exit(1);
+      }
+
       listMut.forEach(item => {
         const {
           from,

@@ -95,6 +95,18 @@ If `from` is directory and using `pattern` to filter files, then `flatten` could
 
 #### [move=false]
 
+```ts
+type move = boolean;
+```
+
 As the name indicates, whether to move the file/directory or not.
 
 > `filter` function won't work when setting `move` to `true`. However, you can still use `pattern`.
+
+#### [waitFor=() => Promise.resolve()]
+
+```ts
+type waitFor = (() => Promise<any>) | number;
+```
+
+Simply delay the copy process due to some reason.
