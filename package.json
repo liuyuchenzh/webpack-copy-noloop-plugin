@@ -1,6 +1,6 @@
 {
   "name": "webpack-copy-noloop-plugin",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "author": "Yuchen Liu",
   "license": "MIT",
   "main": "dist/index.js",
