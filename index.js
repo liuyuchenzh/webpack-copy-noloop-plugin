@@ -1,7 +1,7 @@
 const fse = require("fs-extra");
 const fs = require("fs");
 const path = require("path");
-const name = 'webpack-copy-noloop-plugin';
+const name = "webpack-copy-noloop-plugin";
 
 const isDir = location => fs.statSync(location).isDirectory();
 const gatherFiles = location => pattern => {
@@ -49,6 +49,7 @@ class CopyNoLoopPlugin {
    * @param {object} options
    * @param {CopyItem[]} options.list
    * @param {string=} options.root root directory
+   * @param {boolean=} [options.move=false] whether to move or not
    */
   constructor(options) {
     this.options = options;
@@ -56,7 +57,8 @@ class CopyNoLoopPlugin {
 
   apply(compiler) {
     compiler.hooks.done.tap("CopyNoLoopPlugin", () => {
-      const { list, root } = this.options;
+      const { list, root, move = false } = this.options;
+      const action = move ? "moveSync" : "copySync";
       if (!Array.isArray(list)) return;
       let listMut = list.slice();
       if (root) {
@@ -84,11 +86,12 @@ class CopyNoLoopPlugin {
           const files = gatherFiles(from)(pattern);
           files.forEach(file => {
             const dest = getDestPath(from, to)(file, flatten);
-            fse.copySync(file, dest, { filter });
+            fse[action](file, dest, { filter, overwrite: true });
           });
         } else {
-          fse.copySync(from, to, {
-            filter
+          fse[action](from, to, {
+            filter,
+            overwrite: true
           });
         }
       });

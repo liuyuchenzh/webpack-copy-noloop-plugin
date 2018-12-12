@@ -8,7 +8,7 @@
   "module": "dist/index.mjs",
   "source": "index.js",
   "dependencies": {
-    "fs-extra": "^7.0.0"
+    "fs-extra": "^7.0.1"
   },
   "repository": {
     "type": "git",
@@ -25,6 +25,6 @@
     "dev": "microbundle watch"
   },
   "devDependencies": {
-    "microbundle": "^0.7.0"
+    "microbundle": "^0.8.3"
   }
 }
