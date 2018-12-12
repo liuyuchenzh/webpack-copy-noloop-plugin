@@ -4,6 +4,175 @@
 	(factory());
 }(this, (function () {
 	// A type of promise-like that resolves synchronously and supports only one observer
+	const _Pact = (function() {
+		function _Pact() {}
+		_Pact.prototype.then = function(onFulfilled, onRejected) {
+			const result = new _Pact();
+			const state = this.s;
+			if (state) {
+				const callback = state & 1 ? onFulfilled : onRejected;
+				if (callback) {
+					try {
+						_settle(result, 1, callback(this.v));
+					} catch (e) {
+						_settle(result, 2, e);
+					}
+					return result;
+				} else {
+					return this;
+				}
+			}
+			this.o = function(_this) {
+				try {
+					const value = _this.v;
+					if (_this.s & 1) {
+						_settle(result, 1, onFulfilled ? onFulfilled(value) : value);
+					} else if (onRejected) {
+						_settle(result, 1, onRejected(value));
+					} else {
+						_settle(result, 2, value);
+					}
+				} catch (e) {
+					_settle(result, 2, e);
+				}
+			};
+			return result;
+		};
+		return _Pact;
+	})();
+
+	// Settles a pact synchronously
+	function _settle(pact, state, value) {
+		if (!pact.s) {
+			if (value instanceof _Pact) {
+				if (value.s) {
+					if (state & 1) {
+						state = value.s;
+					}
+					value = value.v;
+				} else {
+					value.o = _settle.bind(null, pact, state);
+					return;
+				}
+			}
+			if (value && value.then) {
+				value.then(_settle.bind(null, pact, state), _settle.bind(null, pact, 2));
+				return;
+			}
+			pact.s = state;
+			pact.v = value;
+			const observer = pact.o;
+			if (observer) {
+				observer(pact);
+			}
+		}
+	}
+
+	// Asynchronously implement a switch statement
+	function _switch(discriminant, cases) {
+		var dispatchIndex = -1;
+		var awaitBody;
+		outer: {
+			for (var i = 0; i < cases.length; i++) {
+				var test = cases[i][0];
+				if (test) {
+					var testValue = test();
+					if (testValue && testValue.then) {
+						break outer;
+					}
+					if (testValue === discriminant) {
+						dispatchIndex = i;
+						break;
+					}
+				} else {
+					// Found the default case, set it as the pending dispatch case
+					dispatchIndex = i;
+				}
+			}
+			if (dispatchIndex !== -1) {
+				do {
+					var body = cases[dispatchIndex][1];
+					while (!body) {
+						dispatchIndex++;
+						body = cases[dispatchIndex][1];
+					}
+					var result = body();
+					if (result && result.then) {
+						awaitBody = true;
+						break outer;
+					}
+					var fallthroughCheck = cases[dispatchIndex][2];
+					dispatchIndex++;
+				} while (fallthroughCheck && !fallthroughCheck());
+				return result;
+			}
+		}
+		const pact = new _Pact();
+		const reject = _settle.bind(null, pact, 2);
+		(awaitBody ? result.then(_resumeAfterBody) : testValue.then(_resumeAfterTest)).then(void 0, reject);
+		return pact;
+		function _resumeAfterTest(value) {
+			for (;;) {
+				if (value === discriminant) {
+					dispatchIndex = i;
+					break;
+				}
+				if (++i === cases.length) {
+					if (dispatchIndex !== -1) {
+						break;
+					} else {
+						_settle(pact, 1, result);
+						return;
+					}
+				}
+				test = cases[i][0];
+				if (test) {
+					value = test();
+					if (value && value.then) {
+						value.then(_resumeAfterTest).then(void 0, reject);
+						return;
+					}
+				} else {
+					dispatchIndex = i;
+				}
+			}
+			do {
+				var body = cases[dispatchIndex][1];
+				while (!body) {
+					dispatchIndex++;
+					body = cases[dispatchIndex][1];
+				}
+				var result = body();
+				if (result && result.then) {
+					result.then(_resumeAfterBody).then(void 0, reject);
+					return;
+				}
+				var fallthroughCheck = cases[dispatchIndex][2];
+				dispatchIndex++;
+			} while (fallthroughCheck && !fallthroughCheck());
+			_settle(pact, 1, result);
+		}
+		function _resumeAfterBody(result) {
+			for (;;) {
+				var fallthroughCheck = cases[dispatchIndex][2];
+				if (!fallthroughCheck || fallthroughCheck()) {
+					break;
+				}
+				dispatchIndex++;
+				var body = cases[dispatchIndex][1];
+				while (!body) {
+					dispatchIndex++;
+					body = cases[dispatchIndex][1];
+				}
+				result = body();
+				if (result && result.then) {
+					result.then(_resumeAfterBody).then(void 0, reject);
+					return;
+				}
+			}
+			_settle(pact, 1, result);
+		}
+	}
 
 	// Asynchronously call a function and send errors to recovery continuation
 	function _catch(body, recover) {
@@ -126,13 +295,15 @@
 	      }
 
 	      var _temp2 = _catch(function () {
-	        var _temp = function () {
-	          if (typeof waitFor === "function") {
-	            return Promise.resolve(waitFor()).then(function () {});
-	          } else {
-	            return Promise.resolve(new Promise(function (resolve) { return setTimeout(resolve, waitFor); })).then(function () {});
-	          }
-	        }();
+	        var _temp = _switch(typeof waitFor, [[function () {
+	          return "function";
+	        }, function () {
+	          return Promise.resolve(waitFor()).then(function () {});
+	        }], [function () {
+	          return "number";
+	        }, function () {
+	          return Promise.resolve(new Promise(function (resolve) { return setTimeout(resolve, waitFor); })).then(function () {});
+	        }], []]);
 
 	        return _temp && _temp.then ? _temp.then(function () {}) : void 0;
 	      }, function (e) {

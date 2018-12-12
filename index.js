@@ -81,10 +81,15 @@ class CopyNoLoopPlugin {
         });
       }
       try {
-        if (typeof waitFor === "function") {
-          await waitFor();
-        } else {
-          await new Promise(resolve => setTimeout(resolve, waitFor));
+        switch (typeof waitFor) {
+          case "function":
+            await waitFor();
+            break;
+          case "number":
+            await new Promise(resolve => setTimeout(resolve, waitFor));
+            break;
+          default:
+            break;
         }
       } catch (e) {
         console.log(`[${name}]: Err occurred when trying to execute waitFor`);
