@@ -1,5 +1,7 @@
 # webpack-copy-noloop-plugin
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/liuyuchenzh/webpack-copy-noloop-plugin.svg)](https://greenkeeper.io/)
+
 ## Why
 
 When set `watch` to `true`, won't trigger infinite loop of updates.
